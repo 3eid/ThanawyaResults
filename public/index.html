@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Records</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5">
+    <h1 class="text-center">نتيجة الثانوية العامة المصرية</h1>
+    <h3 class="text-center">من تطوير جروب الفاعلين ومسكة</h3>
+    <form id="searchForm" class="mb-5">
+        <div class="form-group">
+            <label for="rollNumber">رقم الجلوس:</label>
+            <input type="text" id="rollNumber" name="rollNumber" class="form-control">
+        </div>
+        <div class="form-group">
+            <label for="name">الاسم:</label>
+            <input type="text" id="name" name="name" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+    <div id="result"></div>
+
+    <h3 class="text-center">من تطوير جروب الفاعلين ومسكة</h3>
+    <h3 class="text-center">أبو عيد بيدحرج التماسي</h3>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const rollNumber = document.getElementById('rollNumber').value;
+            const name = document.getElementById('name').value;
+            fetch(`/search?rollNumber=${rollNumber}&name=${name}`)
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.getElementById('result');
+                    if (data.length > 0) {
+                        let table = `<table class="table table-striped mt-4">
+                                        <thead>
+                                            <tr>
+                                                <th>رقم الجلوس</th>
+                                                <th>الاسم</th>
+                                                <th>الدرجة</th>
+                                                <th>النسبة</th>
+                                                <th>حالة الطالب</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+                        data.forEach(record => {
+                            table += `<tr>
+                                        <td>${record['رقم الجلوس']}</td>
+                                        <td>${record['الاسم']}</td>
+                                        <td>${record['الدرجة']}</td>
+                                        <td>${record['الدرجة']/410 * 100}</td>
+                                        <td>${record['student_case_desc']}</td>
+                                      </tr>`;
+                        });
+                        table += `</tbody></table>`;
+                        resultDiv.innerHTML = table;
+                    } else {
+                        resultDiv.innerHTML = '<div class="alert alert-danger mt-4">No records found</div>';
+                    }
+                });
+        });
+    </script>
+</body>
+</html>
