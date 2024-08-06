@@ -10,7 +10,6 @@ const client = new MongoClient(uri);
 
 let db, collection;
 
-
 client.connect()
     .then(() => {
         console.log('Connected to MongoDB');
