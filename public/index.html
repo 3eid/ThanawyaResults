@@ -19,6 +19,7 @@
             <label for="name">الاسم:</label>
             <input type="text" id="name" name="name" class="form-control">
         </div>
+        <h5 class="text-center">ابحث برقم الجلوس أو بالاسم</h5>
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
     <div id="result"></div>
@@ -31,6 +32,15 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
+        // Disable the other input field when one is filled
+        document.getElementById('rollNumber').addEventListener('input', function() {
+            document.getElementById('name').disabled = this.value.trim().length > 0;
+        });
+
+        document.getElementById('name').addEventListener('input', function() {
+            document.getElementById('rollNumber').disabled = this.value.trim().length > 0;
+        });
+
         document.getElementById('searchForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const rollNumber = document.getElementById('rollNumber').value;
@@ -56,7 +66,7 @@
                                         <td>${record['رقم الجلوس']}</td>
                                         <td>${record['الاسم']}</td>
                                         <td>${record['الدرجة']}</td>
-                                        <td>${record['الدرجة']/410 * 100}</td>
+                                        <td>${(record['الدرجة'] / 410 * 100).toFixed(2)}</td>
                                         <td>${record['student_case_desc']}</td>
                                       </tr>`;
                         });
