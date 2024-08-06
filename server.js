@@ -5,13 +5,17 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 
 // Read data from JSON file
+// Read data from JSON file
 let data;
 try {
-    data = JSON.parse(fs.readFileSync(path.join(__dirname, 'data.json'), 'utf8'));
+    const jsonData = fs.readFileSync(path.join(__dirname, 'data.json'), 'utf8');
+    console.log('Data read from data.json:', jsonData); // Add this line for debugging
+    data = JSON.parse(jsonData);
 } catch (err) {
     console.error('Error parsing JSON file:', err);
     process.exit(1); // Exit the process if JSON parsing fails
 }
+
 // Serve static files from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
