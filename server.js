@@ -1,20 +1,33 @@
 const express = require('express');
-const fs = require('fs');
+const { MongoClient } = require('mongodb'); // Use destructuring to import MongoClient
 const path = require('path');
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 3000;
 
-// Read data from JSON file
-// Read data from JSON file
-let data;
-try {
-    const jsonData = fs.readFileSync(path.join(__dirname, 'data.json'), 'utf8');
-    console.log('Data read from data.json:', jsonData); // Add this line for debugging
-    data = JSON.parse(jsonData);
-} catch (err) {
-    console.error('Error parsing JSON file:', err);
-    process.exit(1); // Exit the process if JSON parsing fails
-}
+// MongoDB connection URI
+const uri = 'mongodb+srv://cardfolioinfo:admin@cluster0.3oltzs7.mongodb.net/thanawya?retryWrites=true&w=majority';
+const client = new MongoClient(uri);
+
+let db, collection;
+
+client.connect()
+    .then(() => {
+        console.log('Connected to MongoDB');
+        db = client.db('thanawya'); // Database name
+        collection = db.collection('thanawyaResults'); // Collection name
+
+        // Create indices for faster searches
+        collection.createIndex({ "رقم الجلوس": 1 });
+        collection.createIndex({ "الاسم": "text" });
+
+        // Start the server
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
+    })
+    .catch(err => {
+        console.error('Failed to connect to MongoDB', err);
+    });
 
 // Serve static files from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -25,20 +38,23 @@ app.get('/', (req, res) => {
 });
 
 // API endpoint to search records
-app.get('/search', (req, res) => {
-    const rollNumber = req.query.rollNumber;
+app.get('/search', async (req, res) => {
+    const rollNumber = parseInt(req.query.rollNumber);
     const name = req.query.name;
-    let result = data;
+    let query = {};
+
     if (rollNumber) {
-        result = result.filter(record => record['رقم الجلوس'] == rollNumber);
+        query['رقم الجلوس'] = rollNumber;
     }
     if (name) {
-        result = result.filter(record => record['الاسم'].includes(name));
+        query['الاسم'] = { $regex: name, $options: 'i' }; // Case-insensitive search
     }
-    res.json(result);
-});
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    try {
+        const results = await collection.find(query).toArray();
+        res.json(results);
+    } catch (err) {
+        console.error('Error fetching records:', err);
+        res.status(500).json({ error: 'Error fetching records' });
+    }
 });
