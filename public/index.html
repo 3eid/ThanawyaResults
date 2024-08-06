@@ -24,6 +24,20 @@
     <title>Student Records</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+    </style>
 </head>
 <body class="container mt-5">
     <h1 class="text-center">نتيجة الثانوية العامة المصرية</h1>
@@ -44,25 +58,36 @@
 
     <h3 class="text-center">من تطوير جروب الفاعلين ومسكة</h3>
     <h3 class="text-center">أبو عيد بيدحرج التماسي</h3>
+    <footer class="text-center mt-5">
+        <p>Follow us on:</p>
+        <a href="https://x.com/3eid10" target="_blank">
+            <img src="https://img.icons8.com/fluent/48/000000/twitter.png" alt="Twitter">
+        </a>
+        <a href="https://facebook.com/3eid10" target="_blank">
+            <img src="https://img.icons8.com/fluent/48/000000/facebook-new.png" alt="Facebook">
+        </a>
+    </footer>
     <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
-        // Disable the other input field when one is filled
-        document.getElementById('rollNumber').addEventListener('input', function() {
-            document.getElementById('name').disabled = this.value.trim().length > 0;
-        });
-
-        document.getElementById('name').addEventListener('input', function() {
-            document.getElementById('rollNumber').disabled = this.value.trim().length > 0;
-        });
-
         document.getElementById('searchForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const rollNumber = document.getElementById('rollNumber').value;
             const name = document.getElementById('name').value;
+            // Disable form inputs and search button
+            document.getElementById('rollNumber').disabled = true;
+            document.getElementById('name').disabled = true;
+            document.querySelector('button[type="submit"]').disabled = true;
+
+            // Show loading overlay
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading-overlay';
+            loadingOverlay.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>';
+            document.body.appendChild(loadingOverlay);
+
             fetch(`/search?rollNumber=${rollNumber}&name=${name}`)
                 .then(response => response.json())
                 .then(data => {
@@ -87,12 +112,37 @@
                                         <td>${(record['الدرجة'] / 410 * 100).toFixed(2)} %</td>
                                         <td>${record['student_case_desc']}</td>
                                       </tr>`;
+                            if (record['student_case_desc'] != "ناجح دور أول") {
+                                table += `<tr style="text-align: center;">                                            
+                                            <td colspan="5">
+                                                <h3>حظ أوفر المرة القادمة</h3>
+                                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcREuRSTPMCV904oh0MEjgqYokSHzrrimeiIKQ&s">
+                                            </td>
+                                          </tr>`;
+                            }
                         });
                         table += `</tbody></table>`;
                         resultDiv.innerHTML = table;
                     } else {
                         resultDiv.innerHTML = '<div class="alert alert-danger mt-4">No records found</div>';
                     }
+
+                    // Remove loading overlay and enable form inputs and search button
+                    document.body.removeChild(loadingOverlay);
+                    document.getElementById('rollNumber').disabled = false;
+                    document.getElementById('name').disabled = false;
+                    document.querySelector('button[type="submit"]').disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    // Handle error here (e.g., display error message)
+                    resultDiv.innerHTML = '<div class="alert alert-danger mt-4">Error fetching data. Please try again.</div>';
+
+                    // Remove loading overlay and enable form inputs and search button
+                    document.body.removeChild(loadingOverlay);
+                    document.getElementById('rollNumber').disabled = false;
+                    document.getElementById('name').disabled = false;
+                    document.querySelector('button[type="submit"]').disabled = false;
                 });
         });
     </script>
@@ -100,7 +150,5 @@
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WND4Q22K"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
-  
-    
 </body>
 </html>
