@@ -14,7 +14,7 @@ client.connect()
     .then(() => {
         console.log('Connected to MongoDB');
         db = client.db('thanawya'); // Database name
-        collection = db.collection('thanawyaResults2'); // Collection name
+        collection = db.collection('thanawyaResultsNew'); // Collection name
 
         // Create indices for faster searches
         collection.createIndex({ "رقم الجلوس": 1 });
