@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient } = require('mongodb'); // Use destructuring to import MongoClient
+const { MongoClient } = require('mongodb');
 const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,49 +10,75 @@ const client = new MongoClient(uri);
 
 let db, collection;
 
+// Ensure indexes exist without conflict
+async function setupIndexes() {
+  const indexes = await collection.indexes();
+
+  const hasRollIndex = indexes.some(i => i.name === 'رقم الجلوس_1');
+  if (!hasRollIndex) {
+    await collection.createIndex({ "رقم الجلوس": 1 }, { name: "رقم الجلوس_1" });
+  }
+
+  const hasNameTextIndex = indexes.some(i => i.name === 'name_text_index');
+  if (!hasNameTextIndex) {
+    await collection.createIndex({ "الاسم": "text" }, { name: "name_text_index" });
+  }
+}
+
+// Connect to MongoDB and start the server
 client.connect()
-    .then(() => {
-        console.log('Connected to MongoDB');
-        db = client.db('thanawya'); // Database name
-        collection = db.collection('thanawyaResultsNew'); // Collection name
+  .then(async () => {
+    console.log('Connected to MongoDB');
+    db = client.db('thanawya');
+    collection = db.collection('thanawyaResultsNew');
 
+    // Optional: test data dump
+    const testDocs = await collection.find({}).limit(2).toArray();
+    console.log("Sample data from DB:", testDocs);
 
+    // Ensure indexes exist
+    await setupIndexes();
 
-        // Start the server
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
-    })
-    .catch(err => {
-        console.error('Failed to connect to MongoDB', err);
+    // Start the Express server
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
     });
+  })
+  .catch(err => {
+    console.error('Failed to connect to MongoDB', err);
+  });
 
-// Serve static files from 'public' directory
+// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve index.html for the root route
+// Serve homepage
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// API endpoint to search records
+// Search endpoint
 app.get('/search', async (req, res) => {
-    const rollNumber = parseInt(req.query.rollNumber);
-    const name = req.query.name;
-    let query = {};
+  const rollNumber = req.query.rollNumber;
+  const name = req.query.name;
+  let query = {};
 
-    if (rollNumber) {
-        query['رقم الجلوس'] = rollNumber;
-    }
-    if (name) {
-        query['الاسم'] = { $regex: name, $options: 'i' }; // Case-insensitive search
-    }
+  if (rollNumber) {
+    query['رقم الجلوس'] = {
+      $in: [rollNumber, parseInt(rollNumber)]
+    };
+  }
 
-    try {
-        const results = await collection.find(query).toArray();
-        res.json(results);
-    } catch (err) {
-        console.error('Error fetching records:', err);
-        res.status(500).json({ error: 'Error fetching records' });
-    }
+  if (name) {
+    query['الاسم'] = { $regex: name, $options: 'i' };
+  }
+
+  console.log("Search query:", query); // Debug
+
+  try {
+    const results = await collection.find(query).toArray();
+    res.json(results);
+  } catch (err) {
+    console.error('Error fetching records:', err);
+    res.status(500).json({ error: 'Error fetching records' });
+  }
 });
