@@ -16,9 +16,7 @@ client.connect()
         db = client.db('thanawya'); // Database name
         collection = db.collection('thanawyaResultsNew'); // Collection name
 
-        // Create indices for faster searches
-        collection.createIndex({ "رقم الجلوس": 1 });
-        collection.createIndex({ "الاسم": "text" });
+
 
         // Start the server
         app.listen(PORT, () => {
