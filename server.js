@@ -25,6 +25,7 @@ async function setupIndexes() {
   }
 }
 
+
 // Connect to MongoDB and start the server
 client.connect()
   .then(async () => {
